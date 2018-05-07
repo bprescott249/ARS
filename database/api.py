@@ -45,27 +45,29 @@ class Database:
 
     # -------------------- PageVisit -----------------------------
     def insert_page_visit(self, url, activeRatio, focusRatio, visitTime):
-        # Insert the web page visit
-        self.base.session.add(PageVisit(
-            focusRatio=focusRatio,
-            activeRatio=activeRatio,
-            visitTime=visitTime,
-            url=url))
 
-        # Update average focus/active ratio every time a new visit
+        # Insert the web page visit
+        if visitTime > 3:
+            self.base.session.add(PageVisit(
+                focusRatio=focusRatio,
+                activeRatio=activeRatio,
+                visitTime=visitTime,
+                url=url))
+            # Update average focus/active ratio every time a new visit
         visits = PageVisit.query.filter_by(url=url).all()
         activeRatios = 0
         focusRatios = 0
         visitTimes = 0
         for visit in visits:
             if visit.activeRatio is not None and visit.focusRatio is not None:
-                activeRatios += visit.activeRatio
-                focusRatios += visit.focusRatio
-                visitTimes += visit.visitTime
-        page = Page.query.get(url)
-        page.avgActiveRatio = activeRatios / len(visits)
-        page.avgFocusRatio = focusRatios / len(visits)
-        page.avgVisitTime = visitTimes / len(visits)
+                if visitTime > 3:
+                    activeRatios += visit.activeRatio
+                    focusRatios += visit.focusRatio
+                    visitTimes += visit.visitTime
+                    page = Page.query.get(url)
+                    page.avgActiveRatio = activeRatios / len(visits)
+                    page.avgFocusRatio = focusRatios / len(visits)
+                    page.avgVisitTime = visitTimes / len(visits)
 
         self.base.session.commit()
 
